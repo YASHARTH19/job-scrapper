@@ -28,19 +28,33 @@ OUTPUT_FILE = "linkedin_jobs_detailed.xlsx"
 def setup_driver(headless=True):
     chrome_options = Options()
     
-    # Always headless in production/docker
-    chrome_options.add_argument("--headless") 
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1920,1080")
+    # Check for Docker/Render environment variables
+    chrome_bin = os.getenv("CHROME_BIN")
+    chromedriver_path = os.getenv("CHROMEDRIVER_PATH")
     
+    if chrome_bin:
+        chrome_options.binary_location = chrome_bin
+        # Always headless in Docker
+        chrome_options.add_argument("--headless") 
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--window-size=1920,1080")
+    elif headless:
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+
     # Simple strategy usually works best if 'normal' hangs
     chrome_options.page_load_strategy = 'eager' 
 
-    service = Service(ChromeDriverManager().install())
+    if chromedriver_path:
+        service = Service(chromedriver_path)
+    else:
+        service = Service(ChromeDriverManager().install())
+        
     driver = webdriver.Chrome(service=service, options=chrome_options)
-    
     return driver
 
 # -----------------------------
